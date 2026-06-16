@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Bell,
   Building2,
   ClipboardCheck,
   FileText,
@@ -21,7 +20,6 @@ import {
 import { cn } from "@/lib/utils";
 
 const icons = {
-  bell: Bell,
   building: Building2,
   clipboard: ClipboardCheck,
   file: FileText,

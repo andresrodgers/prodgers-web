@@ -12,7 +12,6 @@ const navigationGroups: NavigationGroup[] = [
       { label: "Usuarios PRODGERS", href: "/admin/usuarios", icon: "userCog" },
       { label: "Tasas y pagos", href: "/admin/tasas", icon: "receipt" },
       { label: "Auditoria", href: "/admin/auditoria", icon: "history" },
-      { label: "Notificaciones", href: "/admin/notificaciones", icon: "bell" },
       { label: "Catalogos", href: "/admin/catalogos", icon: "settings" },
     ],
   },
@@ -22,7 +21,6 @@ const navigationGroups: NavigationGroup[] = [
       { label: "Inicio operativo", href: "/prodgers/inicio", icon: "home" },
       { label: "Expedientes", href: "/prodgers/expedientes", icon: "folder" },
       { label: "Instaladoras", href: "/prodgers/instaladoras", icon: "building" },
-      { label: "Notificaciones", href: "/prodgers/notificaciones", icon: "bell" },
     ],
   },
 ];

@@ -8,7 +8,6 @@ const navigation: NavigationItem[] = [
   { label: "Inicio operativo", href: "/prodgers/inicio", icon: "home" },
   { label: "Expedientes", href: "/prodgers/expedientes", icon: "folder" },
   { label: "Instaladoras", href: "/prodgers/instaladoras", icon: "building" },
-  { label: "Notificaciones", href: "/prodgers/notificaciones", icon: "bell" },
 ];
 
 export function ProdgersLayout({ children }: { children: ReactNode }) {

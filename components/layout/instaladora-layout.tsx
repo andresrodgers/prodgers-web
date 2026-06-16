@@ -8,7 +8,6 @@ const navigation: NavigationItem[] = [
   { label: "Inicio", href: "/instaladora/inicio", icon: "home" },
   { label: "Clientes", href: "/instaladora/clientes", icon: "users" },
   { label: "Expedientes", href: "/instaladora/expedientes", icon: "folder" },
-  { label: "Notificaciones", href: "/instaladora/notificaciones", icon: "bell" },
   { label: "Perfil", href: "/instaladora/perfil", icon: "user" },
 ];
 
