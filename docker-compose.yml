@@ -1,8 +1,9 @@
 name: prodgers
 
 # Producción — desplegado en el servidor junto a stk-soporte.
-# La app se expone solo en 127.0.0.1:3000 → Cloudflare Tunnel conecta aquí.
+# Mismo patrón: GitHub → VM Ubuntu → Docker Compose → Cloudflare Tunnel.
 # PostgreSQL no tiene puerto expuesto al exterior.
+# Cloudflare Tunnel apunta internamente a http://app:3000 (dentro de la red Docker).
 
 services:
   postgres:
@@ -45,10 +46,23 @@ services:
       ADMIN_DNI: ${ADMIN_DNI:-}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+    # Puerto expuesto solo al host para acceso técnico por Tailscale
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:3003:3000"
     volumes:
       - prodgers_uploads:/var/lib/prodgers/uploads
+    networks:
+      - prodgers_internal
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: prodgers_cloudflared
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - app
     networks:
       - prodgers_internal
 
@@ -62,7 +76,7 @@ services:
     environment:
       PGPASSWORD: ${POSTGRES_MIGRATOR_PASSWORD}
     volumes:
-      - /opt/backups:/backups
+      - /opt/backups/prodgers:/backups
     networks:
       - prodgers_internal
     entrypoint: >
