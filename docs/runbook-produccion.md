@@ -13,7 +13,7 @@ Docker Compose — proyecto aislado "prodgers"
 ↓
 prodgers_app  +  prodgers_postgres  +  prodgers_cloudflared  +  prodgers_backup
 ↓
-Cloudflare Tunnel → https://app.prodgersenergy.com
+Cloudflare Tunnel → https://portal.prodgersenergy.com
 ```
 
 ## Contenedores
@@ -39,7 +39,7 @@ Cloudflare Tunnel → https://app.prodgersenergy.com
 
 - Dominio: `prodgersenergy.com` — debe estar conectado a Cloudflare.
 - Crear túnel llamado `prodgers-energy` en el dashboard de Cloudflare Zero Trust.
-- Public hostname: `app.prodgersenergy.com → http://app:3000`
+- Public hostname: `portal.prodgersenergy.com → http://app:3000`
 - El token del túnel va en `.env.production` como `CLOUDFLARE_TUNNEL_TOKEN`.
 
 ## Variables de entorno (.env.production)
@@ -47,7 +47,7 @@ Cloudflare Tunnel → https://app.prodgersenergy.com
 Crear solo en el servidor. Nunca subir a Git. Permisos tras crear: `chmod 600 .env.production`
 
 ```env
-APP_URL=https://app.prodgersenergy.com
+APP_URL=https://portal.prodgersenergy.com
 
 POSTGRES_MIGRATOR_PASSWORD=<generar_en_servidor>
 POSTGRES_APP_PASSWORD=<generar_en_servidor>
@@ -109,7 +109,7 @@ docker logs --tail=50 prodgers_app
 docker logs --tail=20 prodgers_cloudflared
 # "Registered tunnel connection"
 
-curl -I https://app.prodgersenergy.com
+curl -I https://portal.prodgersenergy.com
 # HTTP/2 200
 ```
 
@@ -140,5 +140,5 @@ docker exec prodgers_app node scripts/migrate.js
 | Red Docker | `prodgers_internal` | red propia |
 | Puerto host | `3003` | `3002` |
 | Backups | `/opt/backups/prodgers/` | `/opt/backups/stockgi/` |
-| Dominio | `app.prodgersenergy.com` | `soporte.stockgi.com` |
+| Dominio | `portal.prodgersenergy.com` | `soporte.stockgi.com` |
 | PostgreSQL | instancia propia | instancia propia |
