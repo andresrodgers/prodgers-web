@@ -61,7 +61,9 @@ export default function DetalleOperativoPage() {
 
   const [localDocsEntrada, setLocalDocsEntrada] = useState<ExpedienteDetalle["documentosEntrada"]>([]);
   const [localDocsFinales, setLocalDocsFinales] = useState<DocumentoFinal[]>([]);
-  const [_validando, setValidando] = useState<Record<string, boolean>>({});
+  const [validando, setValidando] = useState<Record<string, boolean>>({});
+  const [enviandoFinales, setEnviandoFinales] = useState(false);
+  const [finalesEnviados, setFinalesEnviados] = useState(false);
 
   useEffect(() => {
     fetch(`/api/expedientes/${params.id}`)
@@ -90,7 +92,7 @@ export default function DetalleOperativoPage() {
 
   const isUnassigned = !localResponsableId;
 
-  const _incorrectDocument = useMemo(
+  const incorrectDocument = useMemo(
     () => localDocsEntrada.find((d) => d.estado === "Incorrecto"),
     [localDocsEntrada],
   );
@@ -221,6 +223,24 @@ export default function DetalleOperativoPage() {
     a.href = `/api/documentos-finales/${docId}/download`;
     a.download = nombreArchivo;
     a.click();
+  }
+
+  async function handleEnviarDocumentosFinales() {
+    setEnviandoFinales(true);
+    try {
+      const res = await fetch("/api/documentos-finales/enviar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ expedienteId: params.id }),
+      });
+      const json = await res.json();
+      if (json.ok) {
+        setFinalesEnviados(true);
+        setTimeout(() => setFinalesEnviados(false), 4000);
+      }
+    } finally {
+      setEnviandoFinales(false);
+    }
   }
 
   async function handleMarcarDisponible(docId: string) {
@@ -366,6 +386,7 @@ export default function DetalleOperativoPage() {
                         title={TIPO_DOCUMENTO_LABEL[documento.tipo] ?? documento.tipo}
                         fileName={documento.nombreArchivo ?? "—"}
                         status={documento.estado}
+                        validating={validando[documento.id] ?? false}
                         onDescargar={
                           documento.nombreArchivo
                             ? () => handleDescargarDoc(documento.id, documento.nombreArchivo!)
@@ -413,12 +434,22 @@ export default function DetalleOperativoPage() {
                     <p className="text-[13px] text-brand-secondary">Sin documentos finales.</p>
                   )}
                   <div className="rounded-[12px] border border-dashed border-brand-border bg-brand-surface p-4">
-                    <p className="text-[13px] font-semibold text-brand-primary">Envio de documentos finales</p>
+                    <p className="text-[13px] font-semibold text-brand-primary">Notificar a instaladora</p>
                     <p className="mt-1 text-[12.5px] text-brand-secondary">
-                      Cuando todos los documentos finales requeridos esten cargados, se habilita el envio a la instaladora.
+                      Envía una notificación a la instaladora con los documentos finales marcados como Disponible.
                     </p>
-                    <Button className="mt-3" type="button" disabled>
-                      Enviar documentos finales
+                    {finalesEnviados && (
+                      <p className="mt-2 rounded-[8px] px-3 py-2 text-[12px]" style={{ background: "rgba(46,125,91,.10)", color: "#2E7D5B" }}>
+                        Notificación enviada correctamente.
+                      </p>
+                    )}
+                    <Button
+                      className="mt-3"
+                      type="button"
+                      disabled={enviandoFinales || !localDocsFinales.some((d) => d.estado === "Disponible")}
+                      onClick={handleEnviarDocumentosFinales}
+                    >
+                      {enviandoFinales ? "Enviando…" : "Notificar documentos disponibles"}
                     </Button>
                   </div>
                 </CardContent>
@@ -497,7 +528,12 @@ export default function DetalleOperativoPage() {
                     label="Nuevo estado"
                     options={EXPEDIENTE_ESTADOS as unknown as string[]}
                     value={estadoSeleccionado}
-                    onChange={setEstadoSeleccionado}
+                    onChange={(v) => {
+                      setEstadoSeleccionado(v);
+                      if (v === "Documentacion pendiente" && incorrectDocument) {
+                        setSelectedElement(TIPO_DOCUMENTO_LABEL[incorrectDocument.tipo] ?? incorrectDocument.tipo);
+                      }
+                    }}
                   />
 
                   {mostrarCampoAfectado && (

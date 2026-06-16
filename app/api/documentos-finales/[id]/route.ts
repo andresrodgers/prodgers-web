@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { fail, ok } from "@/lib/api/responses";
 import { getSession } from "@/lib/auth/session";
 import { query } from "@/lib/db/pool";
+import { notificarInstaladora } from "@/lib/notificaciones/crear";
 
 export async function PATCH(
   req: NextRequest,
@@ -20,8 +21,9 @@ export async function PATCH(
   const { id: docId } = await params;
 
   const docResult = await query(
-    `SELECT df.id, df.expediente_id, df.fase, df.titulo, df.estado
+    `SELECT df.id, df.expediente_id, df.fase, df.titulo, df.estado, e.instaladora_id
      FROM documentos_finales df
+     JOIN expedientes e ON e.id = df.expediente_id
      WHERE df.id = $1`,
     [docId],
   );
@@ -61,6 +63,14 @@ export async function PATCH(
      VALUES ($1, $2, $3, $4)`,
     [doc.expediente_id, "Documento final disponible", `${doc.titulo} (${doc.fase})`, session.userId],
   );
+
+  notificarInstaladora(doc.instaladora_id as string, {
+    tipo: "documento_final_disponible",
+    titulo: `Documento listo — ${doc.titulo as string}`,
+    mensaje: `Fase: ${doc.fase as string}`,
+    entidadTipo: "expedientes",
+    entidadId: doc.expediente_id as string,
+  }).catch(() => {});
 
   return NextResponse.json(ok({ id: docId, estado: "Disponible" }));
 }

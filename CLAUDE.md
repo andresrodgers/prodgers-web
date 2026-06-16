@@ -164,9 +164,10 @@ PATCH  /api/documentos-entrada/[id]       # validar / marcar incorrecto (operati
 GET    /api/documentos-finales             # lista por expediente
 POST   /api/documentos-finales            # subir documento final (operativo/admin)
 GET    /api/documentos-finales/[id]/download  # descargar (instaladora: solo estado Disponible)
-PATCH  /api/documentos-finales/[id]       # marcar Disponible (operativo/admin)
+PATCH  /api/documentos-finales/[id]       # marcar Disponible (operativo/admin) — notifica instaladora
+POST   /api/documentos-finales/enviar     # notificar a instaladora los docs en estado Disponible
 
-GET    /api/correcciones                   # lista por expediente
+GET    /api/correcciones                   # lista por expediente (?expediente_id=) o pendientes globales; scoped por instaladora_id
 PATCH  /api/correcciones/[id]             # marcar resuelta (instaladora propietaria/gestora)
 
 GET    /api/tasas                          # lista por expediente o instaladora

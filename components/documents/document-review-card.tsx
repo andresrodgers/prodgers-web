@@ -9,6 +9,7 @@ type DocumentReviewCardProps = {
   fileName: string;
   status: "Subido" | "Validado" | "Incorrecto";
   note?: string;
+  validating?: boolean;
   onDescargar?: () => void;
   onValidar?: () => void;
   onMarkIncorrect?: (title: string, note?: string) => void;
@@ -19,6 +20,7 @@ export function DocumentReviewCard({
   fileName,
   status,
   note,
+  validating = false,
   onDescargar,
   onValidar,
   onMarkIncorrect,
@@ -64,13 +66,14 @@ export function DocumentReviewCard({
         </Button>
         {status !== "Validado" && (
           <>
-            <Button type="button" size="sm" onClick={onValidar}>
+            <Button type="button" size="sm" disabled={validating} onClick={onValidar}>
               Validar
             </Button>
             <Button
               type="button"
               variant="destructive"
               size="sm"
+              disabled={validating}
               onClick={() => onMarkIncorrect?.(title, note)}
             >
               Incorrecto
