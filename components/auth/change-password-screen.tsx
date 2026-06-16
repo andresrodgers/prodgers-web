@@ -76,7 +76,7 @@ export function ChangePasswordScreen({ nombreUsuario, onCambiar }: Props) {
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-secondary"
                 tabIndex={-1}
               >
-                {mostrarNueva ? <EyeOff size={15} /> : <Eye size={15} />}
+                {mostrarNueva ? <Eye size={15} /> : <EyeOff size={15} />}
               </button>
             </div>
             {/* Indicadores de seguridad */}
@@ -107,7 +107,7 @@ export function ChangePasswordScreen({ nombreUsuario, onCambiar }: Props) {
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-secondary"
                 tabIndex={-1}
               >
-                {mostrarConfirmar ? <EyeOff size={15} /> : <Eye size={15} />}
+                {mostrarConfirmar ? <Eye size={15} /> : <EyeOff size={15} />}
               </button>
             </div>
             {confirmar.length > 0 && !coinciden && (

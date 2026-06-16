@@ -109,11 +109,10 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setMostrarPassword((v) => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2"
-                style={{ color: "rgba(255,255,255,.45)" }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-secondary"
                 tabIndex={-1}
               >
-                {mostrarPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                {mostrarPassword ? <Eye size={15} /> : <EyeOff size={15} />}
               </button>
             </div>
           </div>
