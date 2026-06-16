@@ -223,7 +223,7 @@ export default function DetalleOperativoPage() {
     a.click();
   }
 
-  async function _handleMarcarDisponible(docId: string) {
+  async function handleMarcarDisponible(docId: string) {
     const res = await fetch(`/api/documentos-finales/${docId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -398,6 +398,7 @@ export default function DetalleOperativoPage() {
                       phase={documento.fase}
                       title={documento.titulo}
                       available={documento.estado === "Disponible"}
+                      uploaded={documento.estado === "Pendiente" && !!documento.nombreArchivo}
                       onSubir={(file) => handleSubirDocFinal(file, documento.fase, documento.titulo)}
                       onDescargar={
                         documento.nombreArchivo
@@ -405,6 +406,7 @@ export default function DetalleOperativoPage() {
                           : undefined
                       }
                       onReemplazar={(file) => handleSubirDocFinal(file, documento.fase, documento.titulo)}
+                      onMarcarDisponible={() => handleMarcarDisponible(documento.id)}
                     />
                   ))}
                   {localDocsFinales.length === 0 && (

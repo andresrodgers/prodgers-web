@@ -7,18 +7,22 @@ type FinalDocumentCardProps = {
   phase: string;
   title: string;
   available?: boolean;
+  uploaded?: boolean;
   onSubir?: (file: File) => void;
   onDescargar?: () => void;
   onReemplazar?: (file: File) => void;
+  onMarcarDisponible?: () => void;
 };
 
 export function FinalDocumentCard({
   phase,
   title,
   available = false,
+  uploaded = false,
   onSubir,
   onDescargar,
   onReemplazar,
+  onMarcarDisponible,
 }: FinalDocumentCardProps) {
   const uploadRef = useRef<HTMLInputElement>(null);
   const replaceRef = useRef<HTMLInputElement>(null);
@@ -54,21 +58,11 @@ export function FinalDocumentCard({
       <div className="flex shrink-0 gap-2">
         {available ? (
           <>
-            <Button
-              type="button"
-              size="sm"
-              className="gap-1.5"
-              onClick={onDescargar}
-            >
+            <Button type="button" size="sm" className="gap-1.5" onClick={onDescargar}>
               <Download className="h-3.5 w-3.5" />
               Descargar
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => replaceRef.current?.click()}
-            >
+            <Button type="button" variant="outline" size="sm" onClick={() => replaceRef.current?.click()}>
               Reemplazar
             </Button>
             <input
@@ -78,6 +72,18 @@ export function FinalDocumentCard({
               className="hidden"
               onChange={(e) => handleFileChange(e, onReemplazar)}
             />
+          </>
+        ) : uploaded ? (
+          <>
+            {onDescargar && (
+              <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={onDescargar}>
+                <Download className="h-3.5 w-3.5" />
+                Ver
+              </Button>
+            )}
+            <Button type="button" size="sm" onClick={onMarcarDisponible}>
+              Marcar disponible
+            </Button>
           </>
         ) : (
           <>
