@@ -1,0 +1,87 @@
+name: prodgers
+
+# Producción — desplegado en el servidor junto a stk-soporte.
+# La app se expone solo en 127.0.0.1:3000 → Cloudflare Tunnel conecta aquí.
+# PostgreSQL no tiene puerto expuesto al exterior.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: prodgers_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: prodgers_db
+      POSTGRES_USER: prodgers_migrator
+      POSTGRES_PASSWORD: ${POSTGRES_MIGRATOR_PASSWORD}
+      POSTGRES_APP_PASSWORD: ${POSTGRES_APP_PASSWORD}
+    volumes:
+      - prodgers_pgdata:/var/lib/postgresql/data
+      - ./scripts/init-postgres.sh:/docker-entrypoint-initdb.d/init-postgres.sh:ro
+    networks:
+      - prodgers_internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prodgers_migrator -d prodgers_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: prodgers_app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      APP_ENV: production
+      APP_URL: ${APP_URL}
+      DATABASE_URL: postgresql://prodgers_app:${POSTGRES_APP_PASSWORD}@prodgers_postgres:5432/prodgers_db
+      DATABASE_MIGRATOR_URL: postgresql://prodgers_migrator:${POSTGRES_MIGRATOR_PASSWORD}@prodgers_postgres:5432/prodgers_db
+      SESSION_SECRET: ${SESSION_SECRET}
+      UPLOADS_PATH: /var/lib/prodgers/uploads
+      # Variables para seed-admin (solo se usan en el primer deploy, ignoradas después)
+      ADMIN_NOMBRE: ${ADMIN_NOMBRE:-}
+      ADMIN_DNI: ${ADMIN_DNI:-}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - prodgers_uploads:/var/lib/prodgers/uploads
+    networks:
+      - prodgers_internal
+
+  backup:
+    image: postgres:16-alpine
+    container_name: prodgers_backup
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${POSTGRES_MIGRATOR_PASSWORD}
+    volumes:
+      - /opt/backups:/backups
+    networks:
+      - prodgers_internal
+    entrypoint: >
+      sh -c "
+        while true; do
+          TIMESTAMP=$$(date +%Y%m%d_%H%M%S);
+          pg_dump -h prodgers_postgres -U prodgers_migrator -Fc prodgers_db
+            > /backups/prodgers_$${TIMESTAMP}.dump
+            && echo \"[backup] OK: prodgers_$${TIMESTAMP}.dump\"
+            || echo \"[backup] ERROR en $${TIMESTAMP}\";
+          find /backups -name 'prodgers_*.dump' -mtime +30 -delete;
+          sleep 86400;
+        done
+      "
+
+networks:
+  prodgers_internal:
+    driver: bridge
+
+volumes:
+  prodgers_pgdata:
+  prodgers_uploads:

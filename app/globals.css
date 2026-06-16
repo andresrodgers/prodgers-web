@@ -1,26 +1,183 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "../styles/tokens.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: "Montserrat", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-heading: "Poppins", ui-sans-serif, system-ui, sans-serif;
+
+  /* ── Brand tokens como clases Tailwind ── */
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-primary-700: var(--brand-primary-700);
+  --color-brand-primary-600: var(--brand-primary-600);
+  --color-brand-secondary: var(--brand-secondary);
+  --color-brand-secondary-light: var(--brand-secondary-light);
+  --color-brand-accent: var(--brand-accent);
+  --color-brand-accent-dim: var(--brand-accent-dim);
+
+  /* ── App surfaces ── */
+  --color-app-bg: var(--app-bg);
+  --color-app-surface: var(--app-surface);
+  --color-app-muted: var(--app-muted);
+  --color-app-input-bg: var(--app-input-bg);
+  --color-app-hover: var(--app-hover);
+  --color-app-search-bg: var(--app-search-bg);
+  --color-app-border: var(--app-border);
+  --color-app-border-soft: var(--app-border-soft);
+
+  /* ── Estados ── */
+  --color-st-blue: var(--st-blue);
+  --color-st-amber: var(--st-amber);
+  --color-st-green: var(--st-green);
+  --color-st-red: var(--st-red);
+  --color-st-gray: var(--st-gray);
+
+  /* ── Badge colors ── */
+  --color-badge-gray-bg: var(--badge-gray-bg);
+  --color-badge-gray-fg: var(--badge-gray-fg);
+  --color-badge-blue-bg: var(--badge-blue-bg);
+  --color-badge-blue-fg: var(--badge-blue-fg);
+  --color-badge-amber-bg: var(--badge-amber-bg);
+  --color-badge-amber-fg: var(--badge-amber-fg);
+  --color-badge-green-bg: var(--badge-green-bg);
+  --color-badge-green-fg: var(--badge-green-fg);
+  --color-badge-red-bg: var(--badge-red-bg);
+  --color-badge-red-fg: var(--badge-red-fg);
+
+  /* ── Shadcn var mappings ── */
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  /* ── Base del sistema de diseño ── */
+  --background: #F1F4F5;
+  --foreground: #0B2D3D;
+  --card: #FFFFFF;
+  --card-foreground: #0B2D3D;
+  --popover: #FFFFFF;
+  --popover-foreground: #0B2D3D;
+
+  /* Primary = amarillo solar (CTA) */
+  --primary: #F2B233;
+  --primary-foreground: #0B2D3D;
+
+  /* Secondary = petróleo (dark button) */
+  --secondary: #0B2D3D;
+  --secondary-foreground: #FFFFFF;
+
+  --muted: #EEF2F3;
+  --muted-foreground: #5B6770;
+  --accent: #F2B233;
+  --accent-foreground: #0B2D3D;
+  --destructive: #C0492F;
+  --border: rgba(11, 45, 61, 0.08);
+  --input: #EEF2F3;
+  --ring: #0B2D3D;
+
+  /* Radius base = 14px (--r-sm del diseño) */
+  --radius: 0.875rem;
+
+  --sidebar: #0B2D3D;
+  --sidebar-foreground: #FFFFFF;
+  --sidebar-primary: #F2B233;
+  --sidebar-primary-foreground: #0B2D3D;
+  --sidebar-accent: rgba(255, 255, 255, 0.12);
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: rgba(255, 255, 255, 0.10);
+  --sidebar-ring: #F2B233;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Montserrat", ui-sans-serif, system-ui, sans-serif;
+  }
+  html {
+    @apply font-sans;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "Poppins", ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: 0;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  /* Sidebar gradient */
+  .sidebar-gradient {
+    background: linear-gradient(170deg, #11455e 0%, #0B2D3D 60%, #082230 100%);
+  }
+
+  /* Topbar glassmorphism */
+  .topbar-glass {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(16px) saturate(1.4);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  }
+
+  /* KPI card accent (dark gradient) */
+  .kpi-accent {
+    background: linear-gradient(155deg, #14475f, #0B2D3D);
+    box-shadow: 0 14px 30px -14px rgba(11, 45, 61, 0.55);
+  }
+
+  /* App header móvil */
+  .app-header-mobile {
+    background: linear-gradient(150deg, #11455e 0%, #0B2D3D 100%);
+  }
+
+  /* Shadows como utilidades */
+  .shadow-prodgers-sm {
+    box-shadow: var(--shadow-sm);
+  }
+  .shadow-prodgers {
+    box-shadow: var(--shadow-md);
+  }
+  .shadow-prodgers-lg {
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* Solar button glow */
+  .shadow-solar {
+    box-shadow: 0 8px 20px -8px rgba(242, 178, 51, 0.65);
+  }
+  .shadow-dark-btn {
+    box-shadow: 0 8px 20px -10px rgba(11, 45, 61, 0.6);
+  }
 }

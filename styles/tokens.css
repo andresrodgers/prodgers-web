@@ -1,0 +1,49 @@
+:root {
+  /* ── Marca ── */
+  --brand-primary: #0B2D3D;
+  --brand-primary-700: #103a4e;
+  --brand-primary-600: #16475f;
+  --brand-secondary: #5B6770;
+  --brand-secondary-light: #8b96a0;
+  --brand-accent: #F2B233;
+  --brand-accent-dim: #fbe6b6;
+
+  /* ── Superficies de la app ── */
+  --app-bg: #F1F4F5;
+  --app-surface: #FFFFFF;
+  --app-muted: #F4F7F8;
+  --app-input-bg: #EEF2F3;
+  --app-hover: #F6F8F9;
+  --app-search-bg: #E8ECEE;
+
+  /* ── Bordes ── */
+  --app-border: rgba(11, 45, 61, 0.08);
+  --app-border-soft: rgba(11, 45, 61, 0.05);
+
+  /* ── Estados ── */
+  --st-blue: #16475f;
+  --st-amber: #F2B233;
+  --st-green: #2E7D5B;
+  --st-red: #C0492F;
+  --st-gray: #5B6770;
+
+  /* ── Badges (bg + fg) ── */
+  --badge-gray-bg: #e9edee;
+  --badge-gray-fg: #5B6770;
+  --badge-blue-bg: #e1ebf0;
+  --badge-blue-fg: #16475f;
+  --badge-amber-bg: #fbeccf;
+  --badge-amber-fg: #9a6b00;
+  --badge-green-bg: #dcefe4;
+  --badge-green-fg: #1f6b48;
+  --badge-red-bg: #f8e2dc;
+  --badge-red-fg: #C0492F;
+
+  /* ── Sombras ── */
+  --shadow-sm: 0 2px 10px -4px rgba(11, 45, 61, 0.12);
+  --shadow-md: 0 10px 34px -16px rgba(11, 45, 61, 0.20);
+  --shadow-lg: 0 26px 70px -30px rgba(11, 45, 61, 0.40);
+
+  /* ── Sidebar ── */
+  --sidebar-bg: linear-gradient(170deg, #11455e 0%, #0B2D3D 60%, #082230 100%);
+}

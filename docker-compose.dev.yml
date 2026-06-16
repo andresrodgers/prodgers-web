@@ -1,0 +1,30 @@
+name: prodgers
+
+# Solo levanta PostgreSQL para desarrollo local.
+# La app Next.js corre con: npm run dev (puerto 3001)
+# Conecta al postgres de este compose en localhost:5434
+# Puerto 5433 reservado para StockGI Soporte TI (otro proyecto en el mismo entorno)
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: prodgers_postgres_dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: prodgers_db
+      POSTGRES_USER: prodgers_migrator
+      POSTGRES_PASSWORD: ${POSTGRES_MIGRATOR_PASSWORD}
+      POSTGRES_APP_PASSWORD: ${POSTGRES_APP_PASSWORD}
+    ports:
+      - "127.0.0.1:5434:5432"
+    volumes:
+      - prodgers_pgdata_dev:/var/lib/postgresql/data
+      - ./scripts/init-postgres.sh:/docker-entrypoint-initdb.d/init-postgres.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prodgers_migrator -d prodgers_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  prodgers_pgdata_dev:

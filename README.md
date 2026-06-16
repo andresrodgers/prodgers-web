@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PRODGERS Web
 
-## Getting Started
+Portal SaaS de tramitación de expedientes para instalaciones fotovoltaicas.
 
-First, run the development server:
+## Stack
+
+- Next.js 16.2.7 App Router
+- React 19.2.4
+- TypeScript
+- Tailwind CSS v4
+- shadcn/ui
+- PostgreSQL 16 (Docker) — acceso directo via `pg` (node-postgres)
+- Auth JWT propio via `jose` + cookie httpOnly
+- Storage de archivos en disco local (`UPLOADS_PATH`)
+
+## Comandos
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run build
+npm run lint
+npm start
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Estructura
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```text
+app/          Rutas, route groups y API handlers (todos conectados a PostgreSQL).
+components/   UI reutilizable.
+hooks/        use-pagination, use-session.
+lib/          auth/, db/, storage/, permissions/, api/responses.
+middleware.ts Protección de rutas por rol.
+modules/      Dominio por módulo (types, constants).
+styles/       Tokens visuales.
+migrations/   Migraciones SQL versionadas.
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Reglas
 
-## Learn More
+- No commitear `.env.local` ni secretos.
+- `SESSION_SECRET` nunca debe ser corto (mínimo 64 caracteres).
+- `DATABASE_URL` usa usuario `prodgers_app` en runtime (solo DML).
+- Migraciones se ejecutan con usuario `prodgers_migrator` antes de arrancar.
+- Los archivos subidos se sirven siempre a través de la API (nunca desde `public/`).
 
-To learn more about Next.js, take a look at the following resources:
+## Rutas base
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `/login`
+- `/cambiar-contrasena`
+- `/instaladora/inicio`
+- `/prodgers/inicio`
+- `/admin/inicio`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Documentación funcional y arquitectónica
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Ver `../docs/` — en particular `03_arquitectura/` para decisiones de infraestructura, seguridad y modelo de datos.
