@@ -23,10 +23,14 @@ export async function POST(
 
   const { id } = await params;
   const passwordTemporal = generarPasswordTemporal();
-  const passwordHash = await bcrypt.hash(passwordTemporal, 10);
+  const passwordHash = await bcrypt.hash(passwordTemporal, 12);
 
   const result = await query(
-    `UPDATE usuarios SET password_hash = $1, debe_cambiar_password = true
+    `UPDATE usuarios
+     SET password_hash = $1,
+         debe_cambiar_password = true,
+         failed_login_attempts = 0,
+         locked_until = NULL
      WHERE id = $2 AND rol IN ('operativo', 'admin')
      RETURNING id`,
     [passwordHash, id],
