@@ -38,12 +38,21 @@ type DocConfig = { key: DocKey; title: string; required: boolean };
 const DOCS: DocConfig[] = [
   { key: "DNI/NIE titular", title: "DNI/NIE titular", required: true },
   { key: "Factura electrica", title: "Factura eléctrica", required: true },
-  { key: "Autorizacion firmada", title: "Autorización firmada", required: true },
+  { key: "Autorizacion firmada", title: "Autorización firmada", required: false },
   { key: "Fotografias de cubierta", title: "Fotografías de cubierta", required: true },
   { key: "Fotografias del contador", title: "Fotografías del contador", required: true },
   { key: "Fotografias del cuadro electrico", title: "Fotografías del cuadro eléctrico", required: true },
   { key: "Otros documentos", title: "Otros documentos", required: false },
 ];
+
+const DOC_KEY_TO_TIPO: Partial<Record<DocKey, string>> = {
+  "DNI/NIE titular": "dni_nie_titular",
+  "Factura electrica": "factura_electrica",
+  "Autorizacion firmada": "autorizacion_firmada",
+  "Fotografias de cubierta": "fotografias_cubierta",
+  "Fotografias del contador": "fotografias_contador",
+  "Fotografias del cuadro electrico": "fotografias_cuadro_electrico",
+};
 
 const initialDocStatuses: Record<DocKey, DocStatus> = {
   "DNI/NIE titular": "Pendiente",
@@ -68,6 +77,7 @@ type FormData = {
   marcaPanel: string;
   modeloPanel: string;
   cantidadPaneles: string;
+  potenciaPanel: string;
   marcaInversor: string;
   modeloInversor: string;
   potenciaInversor: string;
@@ -78,9 +88,18 @@ type FormData = {
 const emptyForm: FormData = {
   nombre: "", dni: "", telefono: "", correo: "",
   direccion: "", municipio: "", provincia: "", distribuidora: "", observaciones: "",
-  marcaPanel: "", modeloPanel: "", cantidadPaneles: "", marcaInversor: "", modeloInversor: "",
+  marcaPanel: "", modeloPanel: "", cantidadPaneles: "", potenciaPanel: "", marcaInversor: "", modeloInversor: "",
   potenciaInversor: "", modalidad: "Sin excedentes", servicio: "Pack completo",
 };
+
+function calcularPotenciaInstalada(cantidadPaneles: string, potenciaPanel: string): number | null {
+  const cantidad = parseInt(cantidadPaneles, 10);
+  const potencia = parseFloat(potenciaPanel.replace(",", "."));
+  if (!Number.isFinite(cantidad) || !Number.isFinite(potencia) || cantidad <= 0 || potencia <= 0) {
+    return null;
+  }
+  return (cantidad * potencia) / 1000;
+}
 
 export default function NuevoExpedientePage() {
   const router = useRouter();
@@ -88,11 +107,13 @@ export default function NuevoExpedientePage() {
   const [form, setForm] = useState<FormData>(emptyForm);
   const [errors, setErrors] = useState<Partial<Record<keyof FormData | "_docs", string>>>({});
   const [docStatuses, setDocStatuses] = useState<Record<DocKey, DocStatus>>(initialDocStatuses);
+  const [docFiles, setDocFiles] = useState<Partial<Record<DocKey, File>>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
-  function uploadDoc(key: DocKey) {
+  function uploadDoc(key: DocKey, file: File) {
     setDocStatuses((prev) => ({ ...prev, [key]: "Subido" }));
+    setDocFiles((prev) => ({ ...prev, [key]: file }));
     setErrors((prev) => ({ ...prev, _docs: undefined }));
   }
 
@@ -124,6 +145,7 @@ export default function NuevoExpedientePage() {
       if (!form.marcaPanel.trim()) newErrors.marcaPanel = "Campo obligatorio";
       if (!form.modeloPanel.trim()) newErrors.modeloPanel = "Campo obligatorio";
       if (!form.cantidadPaneles.trim()) newErrors.cantidadPaneles = "Campo obligatorio";
+      if (!form.potenciaPanel.trim()) newErrors.potenciaPanel = "Campo obligatorio";
       if (!form.marcaInversor.trim()) newErrors.marcaInversor = "Campo obligatorio";
       if (!form.modeloInversor.trim()) newErrors.modeloInversor = "Campo obligatorio";
       if (!form.potenciaInversor.trim()) newErrors.potenciaInversor = "Campo obligatorio";
@@ -149,7 +171,9 @@ export default function NuevoExpedientePage() {
   async function handleSubmit() {
     setSubmitError("");
     setSubmitting(true);
-    const potenciaNum = parseFloat(form.potenciaInversor.replace(",", "."));
+    const potenciaInversorNum = parseFloat(form.potenciaInversor.replace(",", "."));
+    const potenciaPanelNum = parseFloat(form.potenciaPanel.replace(",", "."));
+    const potenciaInstalada = calcularPotenciaInstalada(form.cantidadPaneles, form.potenciaPanel);
     try {
       const res = await fetch("/api/expedientes", {
         method: "POST",
@@ -165,13 +189,14 @@ export default function NuevoExpedientePage() {
           provincia: form.provincia,
           distribuidora: form.distribuidora,
           observaciones: form.observaciones || undefined,
-          potenciaKw: potenciaNum,
+          potenciaKw: potenciaInstalada,
           marcaPanel: form.marcaPanel,
           modeloPanel: form.modeloPanel,
           cantidadPaneles: parseInt(form.cantidadPaneles, 10),
+          potenciaPanelWp: potenciaPanelNum,
           marcaInversor: form.marcaInversor,
           modeloInversor: form.modeloInversor,
-          potenciaInversorKwp: potenciaNum,
+          potenciaInversorKwp: potenciaInversorNum,
           modalidadAutoconsumo: form.modalidad,
         }),
       });
@@ -181,11 +206,63 @@ export default function NuevoExpedientePage() {
         setSubmitting(false);
         return;
       }
-      router.push(`/instaladora/expedientes/${json.data.id}`);
+      const expedienteId = json.data.id as string;
+      const fallos = await subirDocumentosSeleccionados(expedienteId);
+      if (fallos.length > 0) {
+        setSubmitError(
+          `El expediente se creó, pero no se pudieron subir estos documentos: ${fallos.join(", ")}. Puedes volver a subirlos desde el detalle del expediente.`,
+        );
+        setSubmitting(false);
+        setTimeout(() => router.push(`/instaladora/expedientes/${expedienteId}`), 3000);
+        return;
+      }
+      router.push(`/instaladora/expedientes/${expedienteId}`);
     } catch {
       setSubmitError("Error de conexión. Inténtalo de nuevo.");
       setSubmitting(false);
     }
+  }
+
+  async function subirDocumentosSeleccionados(expedienteId: string): Promise<string[]> {
+    const archivosSeleccionados = (Object.entries(docFiles) as [DocKey, File][]).filter(
+      ([, file]) => !!file,
+    );
+    if (archivosSeleccionados.length === 0) return [];
+
+    const fallos: string[] = [];
+    try {
+      const expRes = await fetch(`/api/expedientes/${expedienteId}`);
+      const expJson = await expRes.json();
+      if (!expJson.ok) return archivosSeleccionados.map(([key]) => key);
+
+      const docIdPorTipo: Record<string, string> = {};
+      for (const doc of expJson.data.documentosEntrada as Array<{ id: string; tipo: string }>) {
+        docIdPorTipo[doc.tipo] = doc.id;
+      }
+
+      await Promise.all(
+        archivosSeleccionados.map(async ([key, file]) => {
+          const tipo = DOC_KEY_TO_TIPO[key];
+          const docId = tipo ? docIdPorTipo[tipo] : undefined;
+          if (!docId) {
+            fallos.push(key);
+            return;
+          }
+
+          const formData = new FormData();
+          formData.append("file", file);
+          const uploadRes = await fetch(`/api/documentos-entrada/${docId}/upload`, {
+            method: "POST",
+            body: formData,
+          });
+          const uploadJson = await uploadRes.json().catch(() => ({ ok: false }));
+          if (!uploadJson.ok) fallos.push(key);
+        }),
+      );
+    } catch {
+      return archivosSeleccionados.map(([key]) => key);
+    }
+    return fallos;
   }
 
   const hasDocErrors = !!errors._docs;
@@ -386,6 +463,8 @@ function DatosTecnicosStep({
   setField: (f: keyof FormData, v: string) => void;
   errors: Partial<Record<keyof FormData, string>>;
 }) {
+  const potenciaInstalada = calcularPotenciaInstalada(form.cantidadPaneles, form.potenciaPanel);
+
   return (
     <FormSection title="Datos tecnicos" description="Información sobre los equipos y modalidad de la instalación.">
       <div className="grid gap-4 sm:grid-cols-2">
@@ -395,12 +474,20 @@ function DatosTecnicosStep({
           value={form.modeloPanel} onChange={(v) => setField("modeloPanel", v)} error={errors.modeloPanel} />
         <Field id="cantidadPaneles" label="Cantidad de paneles" placeholder="12" required type="number"
           value={form.cantidadPaneles} onChange={(v) => setField("cantidadPaneles", v)} error={errors.cantidadPaneles} />
+        <Field id="potenciaPanel" label="Potencia de panel (Wp)" placeholder="Ej: 450" required type="number"
+          value={form.potenciaPanel} onChange={(v) => setField("potenciaPanel", v)} error={errors.potenciaPanel} />
         <Field id="marcaInversor" label="Marca del inversor" placeholder="Ej: Huawei" required
           value={form.marcaInversor} onChange={(v) => setField("marcaInversor", v)} error={errors.marcaInversor} />
         <Field id="modeloInversor" label="Modelo del inversor" placeholder="Ej: SUN2000-5KTL" required
           value={form.modeloInversor} onChange={(v) => setField("modeloInversor", v)} error={errors.modeloInversor} />
-        <Field id="potenciaInversor" label="Potencia del inversor" placeholder="Ej: 5.4 kWp" required
+        <Field id="potenciaInversor" label="Potencia del inversor (kW)" placeholder="Ej: 5.4 kW" required
           value={form.potenciaInversor} onChange={(v) => setField("potenciaInversor", v)} error={errors.potenciaInversor} />
+        <div className="flex flex-col gap-1.5">
+          <Label>Potencia Instalada (kW)</Label>
+          <div className="flex h-11 items-center rounded-[10px] border border-brand-border bg-[#EEF2F3] px-4 text-[14px] font-semibold text-brand-primary">
+            {potenciaInstalada !== null ? `${potenciaInstalada.toLocaleString("es-ES", { maximumFractionDigits: 3 })} kW` : "—"}
+          </div>
+        </div>
       </div>
 
       <SelectField
@@ -428,7 +515,7 @@ function DocumentosStep({
   form: FormData;
   setField: (f: keyof FormData, v: string) => void;
   docStatuses: Record<DocKey, DocStatus>;
-  onUpload: (key: DocKey) => void;
+  onUpload: (key: DocKey, file: File) => void;
 }) {
   const pendientesObligatorios = DOCS.filter(
     (d) => d.required && docStatuses[d.key] === "Pendiente"
@@ -463,7 +550,9 @@ function DocumentosStep({
             title={doc.title}
             required={doc.required}
             status={docStatuses[doc.key]}
-            onUpload={() => onUpload(doc.key)}
+            onUpload={(file) => onUpload(doc.key, file)}
+            templateUrl={doc.key === "Autorizacion firmada" ? "/templates/autorizacion-representacion.docx" : undefined}
+            disclaimer={doc.key === "Autorizacion firmada" ? "Recomendado para agilizar gestiones administrativas y trámites en nombre del titular." : undefined}
           />
         ))}
       </div>
@@ -472,6 +561,7 @@ function DocumentosStep({
 }
 
 function RevisionStep({ form }: { form: FormData }) {
+  const potenciaInstalada = calcularPotenciaInstalada(form.cantidadPaneles, form.potenciaPanel);
   const modalidadLabel: Record<string, string> = {
     "Sin excedentes": "Sin excedentes",
     "Con excedentes acogido a compensacion": "Con excedentes acogido a compensación",
@@ -501,8 +591,10 @@ function RevisionStep({ form }: { form: FormData }) {
       <div className="grid gap-3 sm:grid-cols-2">
         <Read label="Panel" value={[form.marcaPanel, form.modeloPanel].filter(Boolean).join(" — ") || "—"} />
         <Read label="Cantidad paneles" value={form.cantidadPaneles || "—"} />
+        <Read label="Potencia de panel" value={form.potenciaPanel ? `${form.potenciaPanel} Wp` : "—"} />
+        <Read label="Potencia Instalada" value={potenciaInstalada !== null ? `${potenciaInstalada.toLocaleString("es-ES", { maximumFractionDigits: 3 })} kW` : "—"} />
         <Read label="Inversor" value={[form.marcaInversor, form.modeloInversor].filter(Boolean).join(" — ") || "—"} />
-        <Read label="Potencia inversor" value={form.potenciaInversor || "—"} />
+        <Read label="Potencia inversor" value={form.potenciaInversor ? `${form.potenciaInversor} kW` : "—"} />
         <Read label="Modalidad autoconsumo" value={modalidadLabel[form.modalidad] ?? form.modalidad} />
         <Read label="Tipo de servicio" value={servicioLabel[form.servicio] ?? form.servicio} />
       </div>

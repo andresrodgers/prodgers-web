@@ -112,13 +112,13 @@ export async function POST(req: NextRequest) {
   const {
     clienteNombre, clienteDni, clienteTelefono, clienteCorreo,
     servicio, direccion, municipio, provincia, codigoPostal, distribuidora, observaciones,
-    potenciaKw, marcaPanel, modeloPanel, cantidadPaneles,
+    potenciaKw, marcaPanel, modeloPanel, cantidadPaneles, potenciaPanelWp,
     marcaInversor, modeloInversor, potenciaInversorKwp, modalidadAutoconsumo,
   } = body;
 
   const required: Record<string, unknown> = {
     clienteNombre, clienteDni, servicio, direccion, municipio, provincia,
-    distribuidora, potenciaKw, marcaPanel, modeloPanel, cantidadPaneles,
+    distribuidora, potenciaKw, marcaPanel, modeloPanel, cantidadPaneles, potenciaPanelWp,
     marcaInversor, modeloInversor, potenciaInversorKwp, modalidadAutoconsumo,
   };
   for (const [field, value] of Object.entries(required)) {
@@ -150,14 +150,14 @@ export async function POST(req: NextRequest) {
       `INSERT INTO expedientes (
          instaladora_id, cliente_final_id, created_by,
          servicio, direccion, municipio, provincia, codigo_postal, distribuidora, observaciones,
-         potencia_kw, marca_panel, modelo_panel, cantidad_paneles,
+         potencia_kw, marca_panel, modelo_panel, cantidad_paneles, potencia_panel_wp,
          marca_inversor, modelo_inversor, potencia_inversor_kwp, modalidad_autoconsumo
-       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
        RETURNING id, codigo`,
       [
         instaladoraId, clienteId, userId,
         servicio, direccion, municipio, provincia, codigoPostal || null, distribuidora, observaciones || null,
-        potenciaKw, marcaPanel, modeloPanel, cantidadPaneles,
+        potenciaKw, marcaPanel, modeloPanel, cantidadPaneles, potenciaPanelWp,
         marcaInversor, modeloInversor, potenciaInversorKwp, modalidadAutoconsumo,
       ],
     );

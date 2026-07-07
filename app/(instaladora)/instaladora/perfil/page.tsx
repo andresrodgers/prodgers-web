@@ -1,10 +1,34 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 import { FormSection } from "@/components/forms/form-section";
 import { PageShell } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
 
+type PerfilInstaladora = {
+  nombre: string;
+  cif: string;
+  contacto: string | null;
+  telefono: string | null;
+  email: string | null;
+};
+
 export default function PerfilInstaladoraPage() {
+  const [perfil, setPerfil] = useState<PerfilInstaladora | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/instaladoras/me")
+      .then((r) => r.json())
+      .then((r) => {
+        if (r.ok) setPerfil(r.data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
   return (
     <PageShell
       eyebrow="Instaladora"
@@ -12,11 +36,19 @@ export default function PerfilInstaladoraPage() {
       description="Datos de cuenta de la instaladora. En el MVP quedan mayormente en solo lectura."
     >
       <FormSection title="Datos de instaladora">
-        <ReadField label="Nombre de instaladora" value="Solar Levante SL" />
-        <ReadField label="Persona de contacto" value="Laura Sanchez" />
-        <ReadField label="Teléfono" value="+34 910 220 118" />
-        <ReadField label="Email" value="operaciones@solarlevante.es" />
-        <ReadField label="Identificador" value="B02938475" />
+        {loading ? (
+          <p className="text-[13px] text-brand-secondary">Cargando…</p>
+        ) : perfil ? (
+          <>
+            <ReadField label="Nombre de instaladora" value={perfil.nombre} />
+            <ReadField label="Persona de contacto" value={perfil.contacto || "—"} />
+            <ReadField label="Teléfono" value={perfil.telefono || "—"} />
+            <ReadField label="Email" value={perfil.email || "—"} />
+            <ReadField label="Identificador" value={perfil.cif} />
+          </>
+        ) : (
+          <p className="text-[13px] text-brand-secondary">No se pudo cargar el perfil.</p>
+        )}
         <div className="flex flex-wrap gap-2">
           <Button asChild>
             <Link href="/cambiar-contrasena">Cambiar contraseña</Link>

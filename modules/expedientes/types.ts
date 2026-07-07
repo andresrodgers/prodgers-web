@@ -74,6 +74,7 @@ export type ExpedienteDetalle = ExpedienteListItem & {
   marcaPanel: string;
   modeloPanel: string;
   cantidadPaneles: number;
+  potenciaPanelWp: number | null;
   marcaInversor: string;
   modeloInversor: string;
   potenciaInversorKwp: number;

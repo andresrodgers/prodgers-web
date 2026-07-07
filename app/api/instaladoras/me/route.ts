@@ -15,7 +15,7 @@ export async function GET() {
   }
 
   const result = await query(
-    `SELECT ins.nombre, ins.saldo_base,
+    `SELECT ins.nombre, ins.cif, ins.contacto, ins.telefono, ins.email, ins.saldo_base,
             COALESCE(SUM(t.monto), 0) AS gastado
      FROM instaladoras ins
      LEFT JOIN tasas t ON t.instaladora_id = ins.id
@@ -28,13 +28,17 @@ export async function GET() {
     return NextResponse.json(fail("not_found", "Instaladora no encontrada."), { status: 404 });
   }
 
-  const { nombre, saldo_base, gastado } = result.rows[0];
+  const { nombre, cif, contacto, telefono, email, saldo_base, gastado } = result.rows[0];
   const saldoBase = parseFloat(saldo_base);
   const gastadoNum = parseFloat(gastado);
 
   return NextResponse.json(
     ok({
       nombre,
+      cif,
+      contacto,
+      telefono,
+      email,
       saldoBase,
       gastado: gastadoNum,
       disponible: saldoBase - gastadoNum,

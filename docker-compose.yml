@@ -79,18 +79,16 @@ services:
       - /opt/backups/prodgers:/backups
     networks:
       - prodgers_internal
-    entrypoint: >
-      sh -c "
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
         while true; do
-          TIMESTAMP=$$(date +%Y%m%d_%H%M%S);
-          pg_dump -h prodgers_postgres -U prodgers_migrator -Fc prodgers_db
-            > /backups/prodgers_$${TIMESTAMP}.dump
-            && echo \"[backup] OK: prodgers_$${TIMESTAMP}.dump\"
-            || echo \"[backup] ERROR en $${TIMESTAMP}\";
-          find /backups -name 'prodgers_*.dump' -mtime +30 -delete;
-          sleep 86400;
+          TIMESTAMP=$$(date +%Y%m%d_%H%M%S)
+          pg_dump -h prodgers_postgres -U prodgers_migrator -Fc prodgers_db > /backups/prodgers_$${TIMESTAMP}.dump && echo "[backup] OK: prodgers_$${TIMESTAMP}.dump" || echo "[backup] ERROR en $${TIMESTAMP}"
+          find /backups -name 'prodgers_*.dump' -mtime +30 -delete
+          sleep 86400
         done
-      "
 
 networks:
   prodgers_internal:

@@ -2,7 +2,7 @@
 
 import { ChevronDown } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { DocumentoFinal } from "@/modules/expedientes/types";
 
@@ -13,6 +13,7 @@ import { Timeline } from "@/components/expediente/timeline";
 import { PageShell } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,6 +23,16 @@ import type { ExpedienteDetalle, HistorialEntry, Tasa } from "@/modules/expedien
 import { TIPO_DOCUMENTO_LABEL } from "@/modules/documentos/constants";
 import { useSession } from "@/hooks/use-session";
 import { timeAgo } from "@/lib/utils";
+
+const FASES_DOCUMENTO_FINAL = [
+  "MTD",
+  "Declaracion Responsable",
+  "CAU",
+  "Legalizacion",
+  "Justificante Ayuntamiento",
+  "Registro Industria",
+  "Carpeta final",
+];
 
 const ESTADOS_SIN_NOTA_REQUERIDA = [
   "MTD en elaboracion",
@@ -64,6 +75,12 @@ export default function DetalleOperativoPage() {
   const [validando, setValidando] = useState<Record<string, boolean>>({});
   const [enviandoFinales, setEnviandoFinales] = useState(false);
   const [finalesEnviados, setFinalesEnviados] = useState(false);
+  const [nuevaFase, setNuevaFase] = useState(FASES_DOCUMENTO_FINAL[0]);
+  const [nuevoTitulo, setNuevoTitulo] = useState("");
+  const [subiendoNuevoFinal, setSubiendoNuevoFinal] = useState(false);
+  const [incorrectoTarget, setIncorrectoTarget] = useState<{ id: string; titulo: string } | null>(null);
+  const [notaIncorrecto, setNotaIncorrecto] = useState("");
+  const [marcandoIncorrecto, setMarcandoIncorrecto] = useState(false);
 
   useEffect(() => {
     fetch(`/api/expedientes/${params.id}`)
@@ -205,6 +222,32 @@ export default function DetalleOperativoPage() {
     a.click();
   }
 
+  function handleAbrirIncorrecto(docId: string, titulo: string) {
+    setIncorrectoTarget({ id: docId, titulo });
+    setNotaIncorrecto("");
+  }
+
+  async function handleConfirmarIncorrecto() {
+    if (!incorrectoTarget || !notaIncorrecto.trim()) return;
+    setMarcandoIncorrecto(true);
+    try {
+      const res = await fetch(`/api/documentos-entrada/${incorrectoTarget.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ estado: "Incorrecto", nota: notaIncorrecto.trim() }),
+      });
+      const json = await res.json();
+      if (json.ok) {
+        setLocalDocsEntrada((prev) =>
+          prev.map((d) => (d.id === incorrectoTarget.id ? { ...d, estado: "Incorrecto" as const } : d)),
+        );
+        setIncorrectoTarget(null);
+      }
+    } finally {
+      setMarcandoIncorrecto(false);
+    }
+  }
+
   async function handleSubirDocFinal(file: File, fase: string, titulo: string) {
     const formData = new FormData();
     formData.append("file", file);
@@ -215,6 +258,17 @@ export default function DetalleOperativoPage() {
     const json = await res.json();
     if (json.ok) {
       setLocalDocsFinales((prev) => [...prev, json.data as DocumentoFinal]);
+    }
+  }
+
+  async function handleAgregarDocumentoFinal(file: File) {
+    if (!nuevoTitulo.trim()) return;
+    setSubiendoNuevoFinal(true);
+    try {
+      await handleSubirDocFinal(file, nuevaFase, nuevoTitulo.trim());
+      setNuevoTitulo("");
+    } finally {
+      setSubiendoNuevoFinal(false);
     }
   }
 
@@ -314,11 +368,17 @@ export default function DetalleOperativoPage() {
               <CardTitle>Resumen técnico</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-3 px-5 pb-5 pt-0 sm:grid-cols-2 lg:grid-cols-4">
-              <ReadField label="Potencia FV" value={`${expediente.potenciaKw} kWp`} />
+              <ReadField label="Tipo de servicio" value={expediente.servicio} />
+              <ReadField label="Panel" value={`${expediente.marcaPanel} ${expediente.modeloPanel}`} />
+              <ReadField label="Cantidad de paneles" value={String(expediente.cantidadPaneles)} />
+              <ReadField label="Potencia de panel" value={expediente.potenciaPanelWp !== null ? `${expediente.potenciaPanelWp} Wp` : "—"} />
+              <ReadField label="Potencia Instalada" value={`${expediente.potenciaKw} kW`} />
               <ReadField label="Inversor" value={`${expediente.marcaInversor} ${expediente.modeloInversor}`} />
+              <ReadField label="Potencia del inversor" value={`${expediente.potenciaInversorKwp} kW`} />
               <ReadField label="Modalidad" value={modalidadLabel[expediente.modalidadAutoconsumo] ?? expediente.modalidadAutoconsumo} />
               <ReadField label="Excedentes" value={excedentes ? "Sí" : "No"} />
               <ReadField label="Compensación" value={compensacion ? "Sí" : "No"} />
+              <ReadField label="Dirección" value={expediente.direccion} />
               <ReadField label="Distribuidora" value={expediente.distribuidora} />
               <ReadField label="Provincia" value={expediente.provincia} />
               <ReadField label="Municipio" value={expediente.municipio} />
@@ -397,11 +457,7 @@ export default function DetalleOperativoPage() {
                             ? () => handleValidarDoc(documento.id)
                             : undefined
                         }
-                        onMarkIncorrect={(title, note) => {
-                          setSelectedElement(TIPO_DOCUMENTO_LABEL[documento.tipo] ?? documento.tipo);
-                          setVisibleNote(note ?? "");
-                          setEstadoSeleccionado("Documentacion pendiente");
-                        }}
+                        onMarkIncorrect={(title) => handleAbrirIncorrecto(documento.id, title)}
                       />
                     ))
                   )}
@@ -433,6 +489,16 @@ export default function DetalleOperativoPage() {
                   {localDocsFinales.length === 0 && (
                     <p className="text-[13px] text-brand-secondary">Sin documentos finales.</p>
                   )}
+
+                  <AgregarDocumentoFinalForm
+                    fase={nuevaFase}
+                    titulo={nuevoTitulo}
+                    uploading={subiendoNuevoFinal}
+                    onFaseChange={setNuevaFase}
+                    onTituloChange={setNuevoTitulo}
+                    onFile={handleAgregarDocumentoFinal}
+                  />
+
                   <div className="rounded-[12px] border border-dashed border-brand-border bg-brand-surface p-4">
                     <p className="text-[13px] font-semibold text-brand-primary">Notificar a instaladora</p>
                     <p className="mt-1 text-[12.5px] text-brand-secondary">
@@ -597,6 +663,38 @@ export default function DetalleOperativoPage() {
           </div>
         </>
       ) : null}
+
+      <Dialog open={!!incorrectoTarget} onOpenChange={(open) => !open && setIncorrectoTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Marcar documento como incorrecto</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-3">
+            <p className="text-[13px] text-brand-secondary">
+              {incorrectoTarget?.titulo} — explica el motivo. La instaladora verá esta nota en sus correcciones pendientes.
+            </p>
+            <Textarea
+              placeholder="Ej: la foto no muestra el número de serie del contador"
+              className="min-h-24"
+              value={notaIncorrecto}
+              onChange={(e) => setNotaIncorrecto(e.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setIncorrectoTarget(null)}>
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={!notaIncorrecto.trim() || marcandoIncorrecto}
+              onClick={handleConfirmarIncorrecto}
+            >
+              {marcandoIncorrecto ? "Guardando…" : "Marcar incorrecto"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageShell>
   );
 }
@@ -633,6 +731,69 @@ function AssignedSummary({ responsable }: { responsable: string }) {
       <Button type="button" variant="outline" disabled>
         Expediente tomado
       </Button>
+    </div>
+  );
+}
+
+function AgregarDocumentoFinalForm({
+  fase,
+  titulo,
+  uploading,
+  onFaseChange,
+  onTituloChange,
+  onFile,
+}: {
+  fase: string;
+  titulo: string;
+  uploading: boolean;
+  onFaseChange: (v: string) => void;
+  onTituloChange: (v: string) => void;
+  onFile: (file: File) => void;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <div className="rounded-[12px] border border-dashed border-brand-border p-4">
+      <p className="text-[13px] font-semibold text-brand-primary">Agregar documento final</p>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <SelectField
+          id="nueva-fase-final"
+          label="Fase"
+          options={FASES_DOCUMENTO_FINAL}
+          value={fase}
+          onChange={onFaseChange}
+        />
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="nuevo-titulo-final">Título</Label>
+          <Input
+            id="nuevo-titulo-final"
+            placeholder="Ej: MTD firmada"
+            value={titulo}
+            onChange={(e) => onTituloChange(e.target.value)}
+          />
+        </div>
+      </div>
+      <div className="mt-3">
+        <Button
+          type="button"
+          size="sm"
+          disabled={!titulo.trim() || uploading}
+          onClick={() => fileRef.current?.click()}
+        >
+          {uploading ? "Subiendo…" : "Seleccionar archivo y subir"}
+        </Button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".pdf,.jpg,.jpeg,.png,.webp"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) onFile(f);
+            e.target.value = "";
+          }}
+        />
+      </div>
     </div>
   );
 }

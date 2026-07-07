@@ -296,6 +296,20 @@ Tipos de servicio: `Pack completo | MTD | Legalizacion | Declaracion Responsable
 
 ---
 
+## Datos técnicos del expediente
+
+- Campos de paneles: `marcaPanel`, `modeloPanel`, `cantidadPaneles`, `potenciaPanelWp` (Wp por panel).
+- `potenciaKw` (columna `potencia_kw`, mostrado como "Potencia FV") es un campo **calculado** en el wizard de creación: `(cantidadPaneles * potenciaPanelWp) / 1000`. No se pide directamente al usuario.
+- `potenciaInversorKwp` es un campo independiente, propio del inversor (label en UI: "Potencia del inversor (kW)").
+- Migraciones `005_potencia_panel.sql` (columna `potencia_panel_wp`), `006_documentos_finales_tamano_bytes.sql` y `007_documentos_finales_updated_at.sql` (columnas faltantes en `documentos_finales` que el código ya asumía).
+
+## Documentos finales — fases válidas
+
+Catálogo fijo (constraint en BD, `migrations/001_initial_schema.sql`): `MTD | Declaracion Responsable | CAU | Legalizacion | Justificante Ayuntamiento | Registro Industria | Carpeta final`.
+El portal operativo (`/prodgers/expedientes/[id]`) tiene un formulario "Agregar documento final" (select de fase + título + archivo) que crea la primera fila de `documentos_finales` para un expediente — antes no existía forma de crear la primera fila y ese flujo estaba completamente roto.
+
+---
+
 ## Variables de entorno requeridas
 
 ```

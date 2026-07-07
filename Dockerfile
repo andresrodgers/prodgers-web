@@ -14,7 +14,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN npm run build
+RUN npx next build --webpack
 
 # Compilar scripts de DB a CommonJS para poder ejecutarlos con node en el runner
 RUN node_modules/.bin/tsc \

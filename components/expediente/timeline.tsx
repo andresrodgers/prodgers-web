@@ -11,7 +11,7 @@ export function Timeline({ items }: { items: TimelineItem[] }) {
   return (
     <ol className="flex flex-col">
       {items.map((item, i) => (
-        <li key={`${item.title}-${item.date}`} className="flex gap-2.5 pb-4 last:pb-0">
+        <li key={i} className="flex gap-2.5 pb-4 last:pb-0">
           {/* Línea + punto */}
           <div className="flex w-3 shrink-0 flex-col items-center">
             <span

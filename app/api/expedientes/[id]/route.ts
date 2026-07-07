@@ -26,7 +26,7 @@ export async function GET(
        e.municipio, e.provincia, e.direccion, e.codigo_postal, e.distribuidora, e.cups, e.estado, e.servicio,
        e.responsable_id, COALESCE(u.nombre, 'Sin asignar') AS responsable,
        e.potencia_kw, e.potencia_inversor_kwp,
-       e.marca_panel, e.modelo_panel, e.cantidad_paneles,
+       e.marca_panel, e.modelo_panel, e.cantidad_paneles, e.potencia_panel_wp,
        e.marca_inversor, e.modelo_inversor, e.modalidad_autoconsumo,
        e.observaciones, e.created_at, e.updated_at
      FROM expedientes e
@@ -86,6 +86,7 @@ export async function GET(
     marcaPanel: e.marca_panel,
     modeloPanel: e.modelo_panel,
     cantidadPaneles: parseInt(e.cantidad_paneles, 10),
+    potenciaPanelWp: e.potencia_panel_wp !== null ? parseFloat(e.potencia_panel_wp) : null,
     marcaInversor: e.marca_inversor,
     modeloInversor: e.modelo_inversor,
     modalidadAutoconsumo: e.modalidad_autoconsumo,
