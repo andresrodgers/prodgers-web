@@ -41,6 +41,8 @@ services:
       DATABASE_MIGRATOR_URL: postgresql://prodgers_migrator:${POSTGRES_MIGRATOR_PASSWORD}@prodgers_postgres:5432/prodgers_db
       SESSION_SECRET: ${SESSION_SECRET}
       UPLOADS_PATH: /var/lib/prodgers/uploads
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-PRODGERS <notificaciones@prodgersenergy.com>}
       # Variables para seed-admin (solo se usan en el primer deploy, ignoradas después)
       ADMIN_NOMBRE: ${ADMIN_NOMBRE:-}
       ADMIN_DNI: ${ADMIN_DNI:-}

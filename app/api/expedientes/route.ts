@@ -193,6 +193,7 @@ export async function POST(req: NextRequest) {
         mensaje: `${codigo} · ${servicio}`,
         entidadTipo: "expedientes",
         entidadId: expedienteId,
+        email: true,
       });
     })().catch(() => {});
 

@@ -99,6 +99,9 @@ export async function PATCH(
     mensaje: `${doc.tipo_documento}${nota ? ` — ${nota}` : ""}`,
     entidadTipo: "expedientes",
     entidadId: doc.expediente_id as string,
+    // Solo el rechazo requiere que la instaladora actúe (volver a subir);
+    // la validación es informativa y se queda solo in-app.
+    email: estado === "Incorrecto",
   }).catch(() => {});
 
   return NextResponse.json(ok({ id: docId, estado }));
