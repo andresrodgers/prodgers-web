@@ -70,6 +70,9 @@ export async function PATCH(
     mensaje: `Fase: ${doc.fase as string}`,
     entidadTipo: "expedientes",
     entidadId: doc.expediente_id as string,
+    // Sin correo aquí a propósito: el operativo tiene un botón dedicado
+    // ("Notificar documentos disponibles", más abajo) que agrupa todos los
+    // documentos Disponible en un solo aviso — evita duplicar el correo.
   }).catch(() => {});
 
   return NextResponse.json(ok({ id: docId, estado: "Disponible" }));

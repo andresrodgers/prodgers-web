@@ -209,6 +209,7 @@ export async function PATCH(
       mensaje: `El estado cambió a "${body.estado}"`,
       entidadTipo: "expedientes",
       entidadId: id,
+      email: true,
     }).catch(() => {});
     return NextResponse.json(ok({ estado: body.estado }));
   }

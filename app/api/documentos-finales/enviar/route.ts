@@ -49,6 +49,7 @@ export async function POST(req: NextRequest) {
     mensaje: titulos,
     entidadTipo: "expedientes",
     entidadId: exp.id as string,
+    email: true,
   });
 
   return NextResponse.json(ok({ enviados: docsResult.rows.length }));

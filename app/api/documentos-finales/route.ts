@@ -153,10 +153,11 @@ export async function POST(req: NextRequest) {
 
   notificarInstaladora(instaladoraId, {
     tipo: "documento_final_subido",
-    titulo: `Documento final disponible`,
+    titulo: `Documento final subido`,
     mensaje: `${fase} — ${titulo.trim()}`,
     entidadTipo: "expedientes",
     entidadId: expedienteId,
+    // Todavía no es descargable (falta marcarlo Disponible), no amerita correo.
   }).catch(() => {});
 
   return NextResponse.json(
